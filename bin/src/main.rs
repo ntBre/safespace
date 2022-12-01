@@ -36,6 +36,9 @@ struct Args {
     /// maximum number of blue stars
     #[arg(short, long)]
     seed: Option<u64>,
+
+    /// output file
+    output: String,
 }
 
 fn main() {
@@ -55,5 +58,5 @@ fn main() {
 
     let img = gen.generate();
 
-    img.write("test.png").unwrap();
+    img.write(args.output).unwrap();
 }
