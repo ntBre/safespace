@@ -1,9 +1,72 @@
 use image::draw::Draw;
-use image::image::draw::Circle;
+use image::image::draw::{Circle, Line};
+use image::{Image, Rgba};
+use once_cell::sync::Lazy;
+use rand::prelude::*;
+use std::collections::HashMap;
 use std::time::UNIX_EPOCH;
 
-use image::{Image, Rgba};
-use rand::prelude::*;
+struct Constellation {
+    /// x,y locations of the stars, eg (500, 250) for the center of a 1000x500
+    /// image
+    nodes: Vec<(usize, usize)>,
+
+    /// indices of nodes that are connected, eg (0,1) means the first two nodes
+    /// should have a line between them
+    edges: Vec<(usize, usize)>,
+
+    /// the size of the canvas for which the constellation was designed. used
+    /// for resizing
+    _scale: (usize, usize),
+}
+
+impl Constellation {
+    // could also have a position to translate to
+    fn draw(
+        &self,
+        img: &mut Image,
+        node_shape: impl Draw<Endpoint = usize>,
+        line: Line,
+        color: Rgba,
+    ) {
+        for (x, y) in &self.nodes {
+            node_shape.draw(img, *x, *y, color);
+        }
+
+        for (a, b) in &self.edges {
+            line.draw(img, self.nodes[*a], self.nodes[*b], color);
+        }
+    }
+}
+
+static CONSTELLATIONS: Lazy<HashMap<&'static str, Constellation>> =
+    Lazy::new(|| {
+        HashMap::from([(
+            "big-dipper",
+            Constellation {
+                nodes: vec![
+                    (300, 260),
+                    (400, 200),
+                    (475, 220),
+                    (575, 240),
+                    (840, 180),
+                    (850, 340),
+                    (650, 380),
+                ],
+                edges: vec![
+                    //
+                    (0, 1),
+                    (1, 2),
+                    (2, 3),
+                    (3, 4),
+                    (4, 5),
+                    (6, 5),
+                    (3, 6),
+                ],
+                _scale: (1000, 500),
+            },
+        )])
+    });
 
 pub struct Generator {
     width: usize,
@@ -14,6 +77,7 @@ pub struct Generator {
     red_max: i32,
     blue_max: i32,
     seed: u64,
+    constellation: String,
 }
 
 /// build the setters needed for a builder macro
@@ -44,6 +108,7 @@ impl Generator {
     red_max, i32;
     blue_max, i32;
     seed, u64;
+    constellation, String;
     }
 
     pub fn new() -> Self {
@@ -56,6 +121,7 @@ impl Generator {
             red_max: 10,
             blue_max: 10,
             seed: UNIX_EPOCH.elapsed().unwrap().as_secs(),
+            constellation: "".to_owned(),
         }
     }
 
@@ -94,6 +160,13 @@ impl Generator {
                 rng.gen_range(0..self.height),
                 blue,
             );
+        }
+
+        // TODO make these flags too
+        let c = Circle::new(20);
+        let l = Line::new(20);
+        if let Some(con) = CONSTELLATIONS.get(&self.constellation[..]) {
+            con.draw(&mut img, c, l, Rgba::green());
         }
         img
     }

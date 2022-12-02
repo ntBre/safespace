@@ -1,6 +1,5 @@
-use safespace::Generator;
-
 use clap::Parser;
+use safespace::Generator;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -39,8 +38,11 @@ struct Args {
 
     /// output file
     output: String,
-}
 
+    /// constellations. currently supports big-dipper only
+    #[arg(short, long, default_value_t = String::from(""))]
+    constellation: String,
+}
 fn main() {
     let args = Args::parse();
     let mut gen = Generator::new()
@@ -50,7 +52,8 @@ fn main() {
         .radius(args.radius)
         .white_radius(args.white_radius)
         .red_max(args.red_max)
-        .blue_max(args.blue_max);
+        .blue_max(args.blue_max)
+        .constellation(args.constellation);
 
     if let Some(seed) = args.seed {
         gen = gen.seed(seed);
