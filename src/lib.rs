@@ -7,17 +7,12 @@ use std::collections::HashMap;
 use std::time::UNIX_EPOCH;
 
 struct Constellation {
-    /// x,y locations of the stars, eg (500, 250) for the center of a 1000x500
-    /// image
-    nodes: Vec<(usize, usize)>,
+    /// x,y locations of the stars relative to position. TODO account for scale
+    nodes: Vec<(isize, isize)>,
 
     /// indices of nodes that are connected, eg (0,1) means the first two nodes
     /// should have a line between them
     edges: Vec<(usize, usize)>,
-
-    /// the size of the canvas for which the constellation was designed. used
-    /// for resizing
-    _scale: (usize, usize),
 }
 
 impl Constellation {
@@ -28,14 +23,28 @@ impl Constellation {
         node_shape: impl Draw<Endpoint = usize>,
         line: Line,
         color: Rgba,
+        position: (usize, usize),
+        scale: f64,
     ) {
+        let (dx, dy) = position;
+        let (dx, dy) = (dx as isize, dy as isize);
         for (x, y) in &self.nodes {
-            node_shape.draw(img, *x, *y, color);
+            node_shape.draw(
+                img,
+                (scale * (x + dx) as f64) as usize,
+                (scale * (y + dy) as f64) as usize,
+                color,
+            );
         }
 
         for (a, b) in &self.edges {
-            line.draw(img, self.nodes[*a], self.nodes[*b], color);
+            line.draw(img, self.nodes(a, dx, dy), self.nodes(b, dx, dy), color);
         }
+    }
+
+    fn nodes(&self, a: &usize, dx: isize, dy: isize) -> (usize, usize) {
+        let (x, y) = self.nodes[*a];
+        ((x + dx) as usize, (y + dy) as usize)
     }
 }
 
@@ -45,13 +54,13 @@ static CONSTELLATIONS: Lazy<HashMap<&'static str, Constellation>> =
             "big-dipper",
             Constellation {
                 nodes: vec![
-                    (300, 260),
-                    (400, 200),
-                    (475, 220),
-                    (575, 240),
-                    (840, 180),
-                    (850, 340),
-                    (650, 380),
+                    (-200, 10),
+                    (-100, -50),
+                    (-25, -30),
+                    (75, -10),
+                    (340, -70),
+                    (350, 90),
+                    (150, 130),
                 ],
                 edges: vec![
                     //
@@ -63,7 +72,6 @@ static CONSTELLATIONS: Lazy<HashMap<&'static str, Constellation>> =
                     (6, 5),
                     (3, 6),
                 ],
-                _scale: (1000, 500),
             },
         )])
     });
@@ -175,7 +183,7 @@ impl Generator {
         let c = Circle::new(self.constellation_size);
         let l = Line::new(self.constellation_width);
         if let Some(con) = CONSTELLATIONS.get(&self.constellation[..]) {
-            con.draw(&mut img, c, l, Rgba::green());
+            con.draw(&mut img, c, l, Rgba::green(), (500, 250), 0.5);
         }
         img
     }
