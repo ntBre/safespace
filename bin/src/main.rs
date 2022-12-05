@@ -42,6 +42,14 @@ struct Args {
     /// constellations. currently supports big-dipper only
     #[arg(short, long, default_value_t = String::from(""))]
     constellation: String,
+
+    /// size of the stars in constellations
+    #[arg(short = 'z', long, default_value_t = 4)]
+    constellation_size: usize,
+
+    /// width of the lines in constellations
+    #[arg(short = 'g', long, default_value_t = 2)]
+    constellation_width: usize,
 }
 fn main() {
     let args = Args::parse();
@@ -53,7 +61,9 @@ fn main() {
         .white_radius(args.white_radius)
         .red_max(args.red_max)
         .blue_max(args.blue_max)
-        .constellation(args.constellation);
+        .constellation(args.constellation)
+        .constellation_size(args.constellation_size)
+        .constellation_width(args.constellation_width);
 
     if let Some(seed) = args.seed {
         gen = gen.seed(seed);

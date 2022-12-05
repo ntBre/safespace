@@ -78,6 +78,12 @@ pub struct Generator {
     blue_max: i32,
     seed: u64,
     constellation: String,
+
+    /// size of the stars
+    constellation_size: usize,
+
+    /// width of the connecting lines
+    constellation_width: usize,
 }
 
 /// build the setters needed for a builder macro
@@ -109,6 +115,8 @@ impl Generator {
     blue_max, i32;
     seed, u64;
     constellation, String;
+    constellation_size, usize;
+    constellation_width, usize;
     }
 
     pub fn new() -> Self {
@@ -122,6 +130,8 @@ impl Generator {
             blue_max: 10,
             seed: UNIX_EPOCH.elapsed().unwrap().as_secs(),
             constellation: "".to_owned(),
+            constellation_size: 4,
+            constellation_width: 2,
         }
     }
 
@@ -162,9 +172,8 @@ impl Generator {
             );
         }
 
-        // TODO make these flags too
-        let c = Circle::new(20);
-        let l = Line::new(20);
+        let c = Circle::new(self.constellation_size);
+        let l = Line::new(self.constellation_width);
         if let Some(con) = CONSTELLATIONS.get(&self.constellation[..]) {
             con.draw(&mut img, c, l, Rgba::green());
         }
